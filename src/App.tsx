@@ -15,6 +15,7 @@ import {
 } from "@azure/communication-calling";
 import { AzureCommunicationTokenCredential } from "@azure/communication-common";
 import VideoCallComponent from "./components/VideoCallComponent";
+import { AzureLogger, setLogLevel } from "@azure/logger";
 
 function App() {
   const [selectedCamera, setSelectedCamera] = useState<string>("");
@@ -58,6 +59,11 @@ function App() {
         }
       )
     );
+
+    setLogLevel("verbose");
+    AzureLogger.log = (...args) => {
+      console.log(...args);
+    };
   };
 
   const handleSelectCameraAndMicrophone = async (
