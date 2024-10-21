@@ -32,6 +32,15 @@ function App() {
     }
   }, [call]);
 
+  useEffect(() => {
+    console.log("Logging should start now:");
+
+    setLogLevel("verbose");
+    AzureLogger.log = (...args) => {
+      console.log(...args);
+    };
+  }, []);
+
   const handleSetCall = async (
     statefulCallClient: StatefulCallClient,
     selectedCamera: string,
@@ -59,11 +68,6 @@ function App() {
         }
       )
     );
-
-    setLogLevel("verbose");
-    AzureLogger.log = (...args) => {
-      console.log(...args);
-    };
   };
 
   const handleSelectCameraAndMicrophone = async (
