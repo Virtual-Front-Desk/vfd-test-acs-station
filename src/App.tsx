@@ -15,11 +15,14 @@ import {
 } from "@azure/communication-calling";
 import { AzureCommunicationTokenCredential } from "@azure/communication-common";
 import VideoCallComponent from "./components/VideoCallComponent";
-import { AzureLogger, setLogLevel } from "@azure/logger";
+import { AzureLogger, createClientLogger, setLogLevel } from "@azure/logger";
+
+setLogLevel("verbose");
 
 function App() {
   const [selectedCamera, setSelectedCamera] = useState<string>("");
   const [callId, setCallId] = useState<string>("");
+  const [logString, setLogString] = useState<string>("");
 
   const [statefulCallClient, setStatefulCallClient] =
     useState<StatefulCallClient | null>(null);
@@ -33,11 +36,8 @@ function App() {
   }, [call]);
 
   useEffect(() => {
-    console.log("Logging should start now:");
-
-    setLogLevel("verbose");
     AzureLogger.log = (...args) => {
-      console.log(...args);
+      setLogString((prev) => prev + args.join(" ") + "\n");
     };
   }, []);
 
@@ -115,9 +115,12 @@ function App() {
     tokenCredential: AzureCommunicationTokenCredential,
     callerId: string
   ) => {
-    const statefulCallClient = createStatefulCallClient({
-      userId: { communicationUserId: callerId },
-    });
+    const statefulCallClient = createStatefulCallClient(
+      {
+        userId: { communicationUserId: callerId },
+      },
+      { callClientOptions: { logger: createClientLogger("acs test") } }
+    );
 
     const callAgent = await statefulCallClient.createCallAgent(
       tokenCredential,
@@ -145,6 +148,17 @@ function App() {
     }
   };
 
+  const downloadLogString = async () => {
+    const blob = new Blob([logString], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "log.txt";
+    a.click();
+
+    setLogString("");
+  };
+
   return (
     <>
       <h1 className="text-center mt-10 text-2xl font-bold">
@@ -159,7 +173,7 @@ function App() {
             <CallClientProvider callClient={statefulCallClient}>
               <CallAgentProvider callAgent={callAgent}>
                 <CallProvider call={call}>
-                  <VideoCallComponent />
+                  <VideoCallComponent saveLogFile={downloadLogString} />
                 </CallProvider>
               </CallAgentProvider>
             </CallClientProvider>
